@@ -2,11 +2,17 @@ import express from "express";
 import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 import cors from "cors";
+import devlite from '@devlite/nodejs';
+devlite.init({ apiKey: process.env.DEVLITE_API_KEY });
+devlite.reportDeployment({ version: process.env.VERSION || process.env.npm_package_version || null, commitSha: process.env.GITHUB_SHA || null });
+devlite.startHostMetrics();
 
 dotenv.config();
 connectDB();
 
 const app = express();
+// DevLite request tracking
+app.use(devlite.expressMiddleware());
 app.use(cors());
 app.use(express.json());
 
@@ -34,5 +40,7 @@ app.use("/api/online-payments", onlinePaymentRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
+// DevLite error capture — keep after your routes
+app.use(devlite.expressErrorHandler());
      console.log(`🚀 Server running on port ${PORT}`)
 );
